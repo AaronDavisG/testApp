@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
-var fs = require("fs");
-var exec = require('child_process').exec;
+
 
 
 function writeExportObject(fs, path, exportObject, next){
@@ -73,20 +72,20 @@ function objectPrompt(targetObject, next){
 	}
 }
 
-function createRepo(config, exec, next){
+function cloneRepo(config, exec, next){
 
 	var dirName = process.cwd() + '/' + config.appName;
 	var repoName = config.repoName
 	var repoURL = config.repoURL
 	var repoEXT = config.repoEXT
 
-	var execCommand = config.systemAction + ' git createRepo ' + dirName + ' ' + repoName + ' ' + repoURL + ' ' + repoEXT;
+	var execCommand = config.systemAction + ' git cloneRepo ' + dirName + ' ' + repoName + ' ' + repoURL + ' ' + repoEXT;
 
 	var execCallback = function (error, stdout, stderr) {
 
 		if (error == null) {
 			console.log('repo: ' + repoURL + '/' + repoName + '.' + repoEXT + 
-						'cloned to: ' + dirName);
+						' cloned to: ' + dirName);
 
 			next();
 		} else {
@@ -98,48 +97,60 @@ function createRepo(config, exec, next){
 	exec(execCommand, execCallback);
 }
 
-function makeConfig(fs, config, next){
-
+function deleteFolder(fs, path){
 	
+	if( fs.existsSync(path) ) {
+	
+		fs.readdirSync(path).forEach(function(file,index){
+	
+			var curPath = path + "/" + file;
+			
+			if(fs.lstatSync(curPath).isDirectory()) { // recurse
+				
+				deleteFolder(curPath);
+			} else { // delete file
+				fs.unlinkSync(curPath);
+			}
+		});
+	}
+}
+
+function install(){
+
+	var fs = require("fs");
+	var exec = require('child_process').exec;
+
+	var config = {
+
+		'appName': 'mySuperApp',
+	//	'chmod': 755,
+		'systemAction': '/home/master/system/script/system/action',
+		'repoName': 'AaronDavisG/myApp',
+		'repoURL': 'https://github.com',
+		'repoEXT':'git',
+		'port': process.env.PORT || 8080,
+		'database': 'mongodb://localhost:27017/myDatabase',
+		'databasePromise': 'bluebird',
+		'secret': 'mySecret'
+	}
 	objectPrompt(config, function(){
 		
 		var appDir = process.cwd() + '/' + config.appName;
 
-		try {
-			fs.statSync(appDir);
-			
-			console.log('Existing Dir: ' + appDir);
-		
-		} catch(e) {
-			
-			console.log('Making Dir: ' + appDir);
-			
-			fs.mkdirSync(appDir);
-		}
-		writeExportObject(fs, appDir + '/config.js', config, next);
+		deleteFolder(fs, appDir);
+
+    	fs.mkdirSync(appDir);
+ 
+		cloneRepo(config, exec, function(){
+
+			writeExportObject(fs, appDir + '/config.js', config, function(){
+
+				console.log('end here!!!');
+				process.exit(0);
+			});
+		});
 	});
 }
 
-var config = {
+install();
 
-	'appName': 'mySuperApp',
-//	'chmod': 755,
-	'systemAction': '/home/master/system/script/system/action',
-	'repoName': 'AaronDavisG/myApp',
-	'repoURL': 'https://github.com',
-	'repoEXT':'git',
-	'port': process.env.PORT || 8080,
-	'database': 'mongodb://localhost:27017/myDatabase',
-	'databasePromise': 'bluebird',
-	'secret': 'mySecret'
-}
-
-makeConfig(fs, config, function(){
-
-	createRepo(config, exec, function(){
-
-	//	fs.chmodSync(process.cwd() + '/' + config.appName + '/*', config.chmod);
-		console.log('end here!!!');
-		process.exit(0);
-	});
-});
