@@ -1,0 +1,145 @@
+#!/usr/bin/env node
+
+var fs = require("fs");
+var exec = require('child_process').exec;
+
+
+function writeExportObject(fs, path, exportObject, next){
+
+	var writeObject = 'module.exports = ' + JSON.stringify(exportObject, null, 2) + ';\n';
+
+	console.log(writeObject);
+
+	fs.writeFile(path, writeObject, function(error) {
+		
+		if (error) {
+			console.log("write error:  " + error.message);
+		} else {
+			console.log("Successful Write to " + path);
+		}
+		next();
+	});
+}
+function objectPrompt(targetObject, next){
+
+	var targetIndex = 0;
+	var targetKeys = Object.keys(targetObject);
+	var targetSize = targetKeys.length;
+
+	if ( targetSize > 0 ){
+
+		var key = targetKeys[targetIndex];
+		var value = targetObject[key];
+
+		console.log('input ' + targetKeys[targetIndex] );
+		console.log('  defaultValue: ' + targetObject[key]);
+		process.stdin.resume();
+
+		process.stdin.setEncoding('utf8');
+
+		process.stdin.on('data', function (text) {
+
+			if (text.length > 1){
+
+				text = text.slice(0, text.length - 1);
+
+				if (Number.isInteger(text)){
+
+					targetObject[key] = parseInt(text, 10);
+
+				}else if( !isNaN(parseFloat(text)) ){
+
+					targetObject[key] = parseFloat(text);
+				}else{
+					targetObject[key] = text;
+				}
+			}
+			targetIndex++;
+
+			if (targetIndex == targetSize){
+
+				process.stdin.resume();
+
+				next();
+			}else{
+
+				key = targetKeys[targetIndex];
+				value = targetObject[key];
+
+				console.log('input ' + targetKeys[targetIndex] );
+				console.log('  defaultValue: ' + targetObject[key]);
+			}
+		});
+	}
+}
+
+function createRepo(config, exec, next){
+
+	var dirName = process.cwd() + '/' + config.appName;
+	var repoName = config.repoName
+	var repoURL = config.repoURL
+	var repoEXT = config.repoEXT
+
+	var execCommand = config.systemAction + ' git createRepo ' + dirName + ' ' + repoName + ' ' + repoURL + ' ' + repoEXT;
+
+	var execCallback = function (error, stdout, stderr) {
+
+		if (error == null) {
+			console.log('repo: ' + repoURL + '/' + repoName + '.' + repoEXT + 
+						'cloned to: ' + dirName);
+
+			next();
+		} else {
+			console.log('exec error: ' + error);
+
+			process.exit(1);
+		}
+	}
+	exec(execCommand, execCallback);
+}
+
+function makeConfig(fs, config, next){
+
+	
+	objectPrompt(config, function(){
+		
+		var appDir = process.cwd() + '/' + config.appName;
+
+		try {
+			fs.statSync(appDir);
+			
+			console.log('Existing Dir: ' + appDir);
+		
+		} catch(e) {
+			
+			console.log('Making Dir: ' + appDir);
+			
+			fs.mkdirSync(appDir);
+		}
+		writeExportObject(fs, appDir + '/config.js', config, next);
+	});
+}
+
+var config = {
+
+	'appName': 'mySuperApp',
+//	'chmod': 755,
+	'systemAction': '/home/master/system/script/system/action',
+	'repoName': 'AaronDavisG/myApp',
+	'repoURL': 'https://github.com',
+	'repoEXT':'git',
+	'port': process.env.PORT || 8080,
+	'database': 'mongodb://localhost:27017/myDatabase',
+	'databasePromise': 'bluebird',
+	'secret': 'mySecret'
+}
+
+makeConfig(fs, config, function(){
+
+	createRepo(config, exec, function(){
+
+	//	fs.chmodSync(process.cwd() + '/' + config.appName + '/*', config.chmod);
+		console.log('end here!!!');
+		process.exit(0);
+	});
+});
