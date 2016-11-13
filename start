@@ -1,5 +1,116 @@
 #!/usr/bin/env node
+#!/usr/bin/env node
+
+var fs = require("fs");
+var exec = require('child_process').exec;
+var config = require('./config.js');
+
+function writeSystemService(fs, config, next){
+
+	var path = '/lib/systemd/system/' + config.appName + '.service';
+
+	var writeObject = '';
+
+	writeObject = writeObject + '[Unit]\n'
+	writeObject = writeObject + 'Description=Node.js ' + config.appName + '\n'
+	writeObject = writeObject + 'Requires=After=mongod.service\n'
+	writeObject = writeObject + '[Service]\n'
+	writeObject = writeObject + 'ExecStart=/usr/local/bin/node ' + process.cwd() + '/server.js\n'
+	writeObject = writeObject + 'Restart=always\n'
+	writeObject = writeObject + 'RestartSec=10\n'
+	writeObject = writeObject + 'StandardOutput=syslog\n'
+	writeObject = writeObject + 'StandardError=syslog\n'
+	writeObject = writeObject + 'SyslogIdentifier=nodejs-' + config.appName + '\n'
+	writeObject = writeObject + 'Environment=NODE_ENV=production PORT=' + config.port +'\n'
+
+	writeObject = writeObject + '[Install]\n'
+	writeObject = writeObject + 'WantedBy=multi-user.target\n'
+
+	console.log(writeObject);
+/**
+	fs.writeFile(path, writeObject, function(error) {
+		
+		if (error) {
+			
+			console.log("write error:  " + error.message);
+
+			process.exit(1);
+		} else {
+			console.log("Successful Write to " + path);
+
+			next();
+		}
+	});*/
+}
+
+function systemService
+
+function systemServiceCall(exec, serviceName, serviceCall, next){
+
+	exec('systemctl ' + serviceCall + ' ' + serviceName + '.service', function (error, stdout, stderr) {
+
+		console.log(stdout);
+
+		if (error == null) {
+			console.log(serviceName + ' ' + serviceCall +' success');
+
+			next();
+		} else {
+			console.log(serviceName + ' ' + serviceCall +' failure');
+
+			process.exit(1);
+		}
+	});
+}
 
 
-console.log('starting!!!');
 
+function start(fs, exec, config){
+
+	writeSystemService(fs, config, function(){
+
+
+
+		console.log('start ' + config.appName + ' success');
+		process.exit(1);
+	});
+}
+
+start(fs, exec, config);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+#create systemd service file
+echo "[Unit]
+Description=High-performance, schema-free document-oriented database
+After=network.target
+ 
+[Service]
+Type=forking
+User=$user
+Group=$group
+PIDFile=$pidPath
+ExecStart=/usr/bin/mongod --quiet --config /etc/mongod.conf
+
+[Install]
+WantedBy=multi-user.target" > /lib/systemd/system/mongod.service
+
+
+
+systemctl daemon-reload
+
+systemctl enable mongod.service
+
+*/
