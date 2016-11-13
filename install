@@ -1,24 +1,21 @@
 #!/usr/bin/env node
 
+var fs = require("fs");
+var exec = require('child_process').exec;
 
+var config = {
 
-
-function writeExportObject(fs, path, exportObject, next){
-
-	var writeObject = 'module.exports = ' + JSON.stringify(exportObject, null, 2) + ';\n';
-
-	console.log(writeObject);
-
-	fs.writeFile(path, writeObject, function(error) {
-		
-		if (error) {
-			console.log("write error:  " + error.message);
-		} else {
-			console.log("Successful Write to " + path);
-		}
-		next();
-	});
+	'appName': 'mySuperApp',
+	'systemAction': '/home/master/system/script/system/action',
+	'repoName': 'AaronDavisG/myApp',
+	'repoURL': 'https://github.com',
+	'repoEXT':'git',
+	'port': process.env.PORT || 8080,
+	'database': 'mongodb://localhost:27017/myDatabase',
+	'databasePromise': 'bluebird',
+	'secret': 'mySecret'
 }
+
 function objectPrompt(targetObject, next){
 
 	var targetIndex = 0;
@@ -72,6 +69,25 @@ function objectPrompt(targetObject, next){
 	}
 }
 
+function deleteFolder(fs, path){
+	
+	if( fs.existsSync(path) ) {
+	
+		fs.readdirSync(path).forEach(function(file,index){
+	
+			var curPath = path + "/" + file;
+			
+			if(fs.lstatSync(curPath).isDirectory()) { // recurse
+				
+				deleteFolder(fs, curPath);
+			} else { // delete file
+				fs.unlinkSync(curPath);
+			}
+		});
+		fs.rmdirSync(path);
+	}
+}
+
 function cloneRepo(config, exec, next){
 
 	var dirName = process.cwd() + '/' + config.appName;
@@ -82,6 +98,8 @@ function cloneRepo(config, exec, next){
 	var execCommand = config.systemAction + ' git cloneRepo ' + dirName + ' ' + repoName + ' ' + repoURL + ' ' + repoEXT;
 
 	var execCallback = function (error, stdout, stderr) {
+
+		console.log(stdout);
 
 		if (error == null) {
 			console.log('repo: ' + repoURL + '/' + repoName + '.' + repoEXT + 
@@ -97,42 +115,46 @@ function cloneRepo(config, exec, next){
 	exec(execCommand, execCallback);
 }
 
-function deleteFolder(fs, path){
-	
-	if( fs.existsSync(path) ) {
-	
-		fs.readdirSync(path).forEach(function(file,index){
-	
-			var curPath = path + "/" + file;
-			
-			if(fs.lstatSync(curPath).isDirectory()) { // recurse
-				
-				deleteFolder(curPath);
-			} else { // delete file
-				fs.unlinkSync(curPath);
-			}
-		});
-	}
+function writeExportObject(fs, path, exportObject, next){
+
+	var writeObject = 'module.exports = ' + JSON.stringify(exportObject, null, 2) + ';\n';
+
+	console.log(writeObject);
+
+	fs.writeFile(path, writeObject, function(error) {
+		
+		if (error) {
+			console.log("write error:  " + error.message);
+		} else {
+			console.log("Successful Write to " + path);
+		}
+		next();
+	});
 }
 
-function install(){
+function installModules(exec, path, next){
 
-	var fs = require("fs");
-	var exec = require('child_process').exec;
+	var execCommand = 'cd ' + path + ' && npm install';
 
-	var config = {
+	var execCallback = function (error, stdout, stderr) {
 
-		'appName': 'mySuperApp',
-	//	'chmod': 755,
-		'systemAction': '/home/master/system/script/system/action',
-		'repoName': 'AaronDavisG/myApp',
-		'repoURL': 'https://github.com',
-		'repoEXT':'git',
-		'port': process.env.PORT || 8080,
-		'database': 'mongodb://localhost:27017/myDatabase',
-		'databasePromise': 'bluebird',
-		'secret': 'mySecret'
+		console.log(stdout);
+
+		if (error == null) {
+			console.log('npm install success');
+
+			next();
+		} else {
+			console.log('npm install error: ' + error);
+
+			process.exit(1);
+		}
 	}
+	exec(execCommand, execCallback);
+}
+
+function install(fs, exec, config){
+
 	objectPrompt(config, function(){
 		
 		var appDir = process.cwd() + '/' + config.appName;
@@ -145,12 +167,17 @@ function install(){
 
 			writeExportObject(fs, appDir + '/config.js', config, function(){
 
-				console.log('end here!!!');
-				process.exit(0);
+				installModules(exec, appDir, function(){
+
+					console.log(config.appName + ' install success');
+
+					// add delete install here
+
+					process.exit(0);
+				});
 			});
 		});
 	});
 }
 
-install();
-
+install(fs, exec, config);
