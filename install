@@ -8,6 +8,7 @@ var exec = require('child_process').exec;
 var config = {
 
 	'appName': 'mySuperApp',
+	'execStart': 'server.js',
 	'systemAction': '/home/master/system/script/system/action',
 	'repoName': 'AaronDavisG/myApp',
 	'repoURL': 'https://github.com',
@@ -158,7 +159,7 @@ function install(fs, exec, config, callback){
 							systemService = systemService + 'Description=Node.js ' + config.appName + '\n'
 							systemService = systemService + 'Requires=After=mongod.service\n'
 							systemService = systemService + '[Service]\n'
-							systemService = systemService + 'ExecStart=/usr/local/bin/node ' + process.cwd() + '/server.js\n'
+							systemService = systemService + 'ExecStart=/usr/local/bin/node ' + appDir + '/' + config.execStart + '\n'
 							systemService = systemService + 'Restart=always\n'
 							systemService = systemService + 'RestartSec=10\n'
 							systemService = systemService + 'User='+ config.owner + '\n'
