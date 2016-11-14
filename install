@@ -112,7 +112,7 @@ function cloneRepo(exec, systemAction, dirName, repoName, repoURL, repoEXT, call
 
 function install(fs, exec, config, callback){
 
-	objectPrompt(config,
+	dataPrompt(config,
 		function(error, config){
 		
 			if (error) {
