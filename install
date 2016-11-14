@@ -149,20 +149,20 @@ function install(fs, exec, config, callback){
 
 							var systemService = '';
 
-							writeObject = writeObject + '[Unit]\n'
-							writeObject = writeObject + 'Description=Node.js ' + config.appName + '\n'
-							writeObject = writeObject + 'Requires=After=mongod.service\n'
-							writeObject = writeObject + '[Service]\n'
-							writeObject = writeObject + 'ExecStart=/usr/local/bin/node ' + process.cwd() + '/server.js\n'
-							writeObject = writeObject + 'Restart=always\n'
-							writeObject = writeObject + 'RestartSec=10\n'
-							writeObject = writeObject + 'StandardOutput=syslog\n'
-							writeObject = writeObject + 'StandardError=syslog\n'
-							writeObject = writeObject + 'SyslogIdentifier=nodejs-' + config.appName + '\n'
-							writeObject = writeObject + 'Environment=NODE_ENV=production PORT=' + config.port +'\n'
+							systemService = systemService + '[Unit]\n'
+							systemService = systemService + 'Description=Node.js ' + config.appName + '\n'
+							systemService = systemService + 'Requires=After=mongod.service\n'
+							systemService = systemService + '[Service]\n'
+							systemService = systemService + 'ExecStart=/usr/local/bin/node ' + process.cwd() + '/server.js\n'
+							systemService = systemService + 'Restart=always\n'
+							systemService = systemService + 'RestartSec=10\n'
+							systemService = systemService + 'StandardOutput=syslog\n'
+							systemService = systemService + 'StandardError=syslog\n'
+							systemService = systemService + 'SyslogIdentifier=nodejs-' + config.appName + '\n'
+							systemService = systemService + 'Environment=NODE_ENV=production PORT=' + config.port +'\n'
 
-							writeObject = writeObject + '[Install]\n'
-							writeObject = writeObject + 'WantedBy=multi-user.target\n'
+							systemService = systemService + '[Install]\n'
+							systemService = systemService + 'WantedBy=multi-user.target\n'
 
 							util.write(fs,
 								systemServicePath,
