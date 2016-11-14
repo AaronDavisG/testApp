@@ -90,7 +90,7 @@ function cloneRepo(exec, systemAction, dirName, repoName, repoURL, repoEXT, call
 
 	exec(config.systemAction
 		+ ' git cloneRepo '
-		+ systemAction + ' '
+		+ dirName + ' '
 		+ repoName + ' '
 		+ repoURL + ' '
 		+ config.repoEXT,
