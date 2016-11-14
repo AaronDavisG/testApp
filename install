@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+//must run as sudo
+
 var fs = require("fs");
 var exec = require('child_process').exec;
                                                
@@ -10,6 +12,9 @@ var config = {
 	'repoName': 'AaronDavisG/myApp',
 	'repoURL': 'https://github.com',
 	'repoEXT':'git',
+	'user':'master',
+	'group':'master',
+	'access':755,
 	'port': process.env.PORT || 8080,
 	'database': 'mongodb://localhost:27017/myDatabase',
 	'databasePromise': 'bluebird',
@@ -156,6 +161,8 @@ function install(fs, exec, config, callback){
 							systemService = systemService + 'ExecStart=/usr/local/bin/node ' + process.cwd() + '/server.js\n'
 							systemService = systemService + 'Restart=always\n'
 							systemService = systemService + 'RestartSec=10\n'
+							systemService = systemService + 'User='+ config.user + '\n'
+							systemService = systemService + 'Group='+ config.group + '\n'
 							systemService = systemService + 'StandardOutput=syslog\n'
 							systemService = systemService + 'StandardError=syslog\n'
 							systemService = systemService + 'SyslogIdentifier=nodejs-' + config.appName + '\n'
@@ -179,11 +186,23 @@ function install(fs, exec, config, callback){
 											if (error) {
 												process.exit(1);
 											}
-											console.log(config.appName + ' install success');
+											util.setPermission(exec, 
+												appDir,
+												config.owner,
+												config.group,
+												config.access,
+												function(error){
 
-											fs.unlinkSync(__dirname + '/' + __filename);
+													if (error) {
+														process.exit(1);
+													}
+													console.log(config.appName + ' install success');
 
-											callback(error);
+													fs.unlinkSync(__filename);
+
+													callback(error);
+												}
+											);
 										}
 									);
 								}
@@ -200,7 +219,7 @@ install(fs,
 	exec,
 	config,
 	function(error){
-
+		console.log('done');
 		process.exit(0);
 	}
 );

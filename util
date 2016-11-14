@@ -134,10 +134,25 @@ function npmInstall(exec, path, callback){
 	});
 }
 
+function setPermission(exec, path, owner, group, access, callback){
+
+	exec('chown -R ' + owner + ':' + group + ' ' + path +
+		' && chmod -R ' + access + ' ' + path,
+		function (error, stdout, stderr) {
+
+			callback(error);
+		}
+	);
+
+}
+
+
 module.exports.dataPrompt = dataPrompt;
 module.exports.write = write;
 module.exports.writeExports = writeExports;
+module.exports.cloneRepo = cloneRepo;
 module.exports.npmInstall = npmInstall;
+module.exports.setPermission = setPermission;
 
 
 
