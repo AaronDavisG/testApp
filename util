@@ -1,1 +1,146 @@
-here
+#!/usr/bin/env node
+
+
+function dataPrompt(data, callback){
+
+	var index = 0;
+	var keys = Object.keys(data);
+	var size = keys.length;
+
+	if ( size > 0 ){
+
+		var key = keys[index];
+		var value = data[key];
+
+		console.log('input ' + keys[index] );
+		console.log('  defaultValue: ' + data[key]);
+		
+		process.stdin.resume();
+
+		process.stdin.setEncoding('utf8');
+
+		process.stdin.on('data', function (text) {
+
+			if (text.length > 1){
+
+				text = text.slice(0, text.length - 1);
+
+				if (Number.isInteger(text)){
+
+					data[key] = parseInt(text, 10);
+
+				}else if( !isNaN(parseFloat(text)) ){
+
+					data[key] = parseFloat(text);
+				}else{
+					data[key] = text;
+				}
+			}
+			index++;
+
+			if (index == size){
+			//	process.stdin.resume();
+				callback(null, data);
+			}else{
+				key = keys[index];
+				value = data[key];
+
+				console.log('input ' + keys[index]);
+				console.log('  defaultValue: ' + data[key]);
+			}
+		});
+	}
+}
+
+function deleteFolder(fs, path){
+
+	if( fs.existsSync(path) ) {
+	
+		fs.readdirSync(path).forEach(function(file,index){
+	
+			var curPath = path + "/" + file;
+
+			if(fs.lstatSync(curPath).isDirectory()) {
+				
+				deleteFolder(fs, curPath);
+			} else {
+				fs.unlinkSync(curPath);
+			}
+		});
+		fs.rmdirSync(path);
+	}
+}
+
+function write(fs, path, content, callback){
+
+	fs.writeFile(path, content, function(error) {
+		
+		if (error) {
+			
+			console.log("write error:  " + error.message); 
+		} else {
+			console.log("Successful Write to " + path);
+		}
+		callback(error);
+	});
+}
+
+function writeExports(fs, path, exportObject, callback){
+
+	write(fs, 
+		path,
+		'module.exports = ' + JSON.stringify(exportObject, null, 2) + ';\n',
+		callback);
+}
+
+function cloneRepo(exec, systemAction, dirName, repoName, repoURL, repoEXT, callback){
+
+	exec(config.systemAction
+		+ ' git cloneRepo '
+		+ systemAction + ' '
+		+ repoName + ' '
+		+ repoURL + ' '
+		+ config.repoEXT,
+		function (error, stdout, stderr) {
+
+			console.log(stdout);
+
+			if (error) {
+				
+				console.log('exec error: ' + error);
+			} else {
+				console.log('repo: ' + repoURL + '/' + repoName + '.' + repoEXT 
+					+ ' cloned to: ' + dirName);
+			}
+			callback(error);
+		}
+	);
+}
+
+function npmInstall(exec, path, callback){
+
+	exec('cd ' + path + ' && npm install',
+
+		function (error, stdout, stderr) {
+
+		console.log(stdout);
+
+		if (error) {
+			console.log('npm install error: ' + error);
+		} else {
+			console.log('npm install success');
+		}
+		callback(error);
+	});
+}
+
+module.exports.dataPrompt = dataPrompt;
+module.exports.write = write;
+module.exports.writeExports = writeExports;
+module.exports.npmInstall = npmInstall;
+
+
+
+
+
+

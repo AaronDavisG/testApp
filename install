@@ -2,7 +2,7 @@
 
 var fs = require("fs");
 var exec = require('child_process').exec;
-
+                                               
 var config = {
 
 	'appName': 'mySuperApp',
@@ -16,19 +16,20 @@ var config = {
 	'secret': 'mySecret'
 }
 
-function objectPrompt(targetObject, next){
+function dataPrompt(data, callback){
 
-	var targetIndex = 0;
-	var targetKeys = Object.keys(targetObject);
-	var targetSize = targetKeys.length;
+	var index = 0;
+	var keys = Object.keys(data);
+	var size = keys.length;
 
-	if ( targetSize > 0 ){
+	if ( size > 0 ){
 
-		var key = targetKeys[targetIndex];
-		var value = targetObject[key];
+		var key = keys[index];
+		var value = data[key];
 
-		console.log('input ' + targetKeys[targetIndex] );
-		console.log('  defaultValue: ' + targetObject[key]);
+		console.log('input ' + keys[index] );
+		console.log('  defaultValue: ' + data[key]);
+		
 		process.stdin.resume();
 
 		process.stdin.setEncoding('utf8');
@@ -41,46 +42,43 @@ function objectPrompt(targetObject, next){
 
 				if (Number.isInteger(text)){
 
-					targetObject[key] = parseInt(text, 10);
+					data[key] = parseInt(text, 10);
 
 				}else if( !isNaN(parseFloat(text)) ){
 
-					targetObject[key] = parseFloat(text);
+					data[key] = parseFloat(text);
 				}else{
-					targetObject[key] = text;
+					data[key] = text;
 				}
 			}
-			targetIndex++;
+			index++;
 
-			if (targetIndex == targetSize){
-
-				process.stdin.resume();
-
-				next();
+			if (index == size){
+			//	process.stdin.resume();
+				callback(null, data);
 			}else{
+				key = keys[index];
+				value = data[key];
 
-				key = targetKeys[targetIndex];
-				value = targetObject[key];
-
-				console.log('input ' + targetKeys[targetIndex] );
-				console.log('  defaultValue: ' + targetObject[key]);
+				console.log('input ' + keys[index]);
+				console.log('  defaultValue: ' + data[key]);
 			}
 		});
 	}
 }
 
 function deleteFolder(fs, path){
-	
+
 	if( fs.existsSync(path) ) {
 	
 		fs.readdirSync(path).forEach(function(file,index){
 	
 			var curPath = path + "/" + file;
-			
-			if(fs.lstatSync(curPath).isDirectory()) { // recurse
+
+			if(fs.lstatSync(curPath).isDirectory()) {
 				
 				deleteFolder(fs, curPath);
-			} else { // delete file
+			} else {
 				fs.unlinkSync(curPath);
 			}
 		});
@@ -88,96 +86,121 @@ function deleteFolder(fs, path){
 	}
 }
 
-function cloneRepo(config, exec, next){
+function cloneRepo(exec, systemAction, dirName, repoName, repoURL, repoEXT, callback){
 
-	var dirName = process.cwd() + '/' + config.appName;
-	var repoName = config.repoName
-	var repoURL = config.repoURL
-	var repoEXT = config.repoEXT
+	exec(config.systemAction
+		+ ' git cloneRepo '
+		+ systemAction + ' '
+		+ repoName + ' '
+		+ repoURL + ' '
+		+ config.repoEXT,
+		function (error, stdout, stderr) {
 
-	var execCommand = config.systemAction + ' git cloneRepo ' + dirName + ' ' + repoName + ' ' + repoURL + ' ' + repoEXT;
+			console.log(stdout);
 
-	var execCallback = function (error, stdout, stderr) {
-
-		console.log(stdout);
-
-		if (error == null) {
-			console.log('repo: ' + repoURL + '/' + repoName + '.' + repoEXT + 
-						' cloned to: ' + dirName);
-
-			next();
-		} else {
-			console.log('exec error: ' + error);
-
-			process.exit(1);
+			if (error) {
+				
+				console.log('exec error: ' + error);
+			} else {
+				console.log('repo: ' + repoURL + '/' + repoName + '.' + repoEXT 
+					+ ' cloned to: ' + dirName);
+			}
+			callback(error);
 		}
-	}
-	exec(execCommand, execCallback);
+	);
 }
 
-function writeExportObject(fs, path, exportObject, next){
+function install(fs, exec, config, callback){
 
-	var writeObject = 'module.exports = ' + JSON.stringify(exportObject, null, 2) + ';\n';
-
-	console.log(writeObject);
-
-	fs.writeFile(path, writeObject, function(error) {
+	objectPrompt(config,
+		function(error, config){
 		
-		if (error) {
-			console.log("write error:  " + error.message);
-		} else {
-			console.log("Successful Write to " + path);
+			if (error) {
+				process.exit(1);
+			}
+			var appDir = process.cwd() + '/' + config.appName;
+
+			deleteFolder(fs, appDir);
+
+	    	fs.mkdirSync(appDir);
+
+	 		cloneRepo(exec, 
+	 			config.systemAction,
+	 			process.cwd() + '/' + config.appName, 
+	 			config.repoName,
+	 			config.repoURL,
+	 			config.repoEXT,
+				function(error){
+
+					if (error) {
+						process.exit(1);
+					}
+					var util = require('./' + config.appName + '/util');
+
+					util.writeExports(fs,
+						appDir + '/config.js',
+						config,
+						function(error){
+					
+							if (error) {
+								process.exit(1);
+							}
+							var systemServicePath = '/lib/systemd/system/' + config.appName + '.service';
+
+							var systemService = '';
+
+							writeObject = writeObject + '[Unit]\n'
+							writeObject = writeObject + 'Description=Node.js ' + config.appName + '\n'
+							writeObject = writeObject + 'Requires=After=mongod.service\n'
+							writeObject = writeObject + '[Service]\n'
+							writeObject = writeObject + 'ExecStart=/usr/local/bin/node ' + process.cwd() + '/server.js\n'
+							writeObject = writeObject + 'Restart=always\n'
+							writeObject = writeObject + 'RestartSec=10\n'
+							writeObject = writeObject + 'StandardOutput=syslog\n'
+							writeObject = writeObject + 'StandardError=syslog\n'
+							writeObject = writeObject + 'SyslogIdentifier=nodejs-' + config.appName + '\n'
+							writeObject = writeObject + 'Environment=NODE_ENV=production PORT=' + config.port +'\n'
+
+							writeObject = writeObject + '[Install]\n'
+							writeObject = writeObject + 'WantedBy=multi-user.target\n'
+
+							util.write(fs,
+								systemServicePath,
+								systemService,
+								function(error){
+											
+									if (error) {
+										process.exit(1);
+									}
+									util.npmInstall(exec,
+										appDir,
+										function(error){
+
+											if (error) {
+												process.exit(1);
+											}
+											console.log(config.appName + ' install success');
+
+											fs.unlinkSync(__dirname + '/' + __filename);
+
+											callback(error);
+										}
+									);
+								}
+							);
+						}
+					);
+				}
+			);
 		}
-		next();
-	});
+	);
 }
 
-function installModules(exec, path, next){
+install(fs,
+	exec,
+	config,
+	function(error){
 
-	var execCommand = 'cd ' + path + ' && npm install';
-
-	var execCallback = function (error, stdout, stderr) {
-
-		console.log(stdout);
-
-		if (error == null) {
-			console.log('npm install success');
-
-			next();
-		} else {
-			console.log('npm install error: ' + error);
-
-			process.exit(1);
-		}
+		process.exit(0);
 	}
-	exec(execCommand, execCallback);
-}
-
-function install(fs, exec, config){
-
-	objectPrompt(config, function(){
-		
-		var appDir = process.cwd() + '/' + config.appName;
-
-		deleteFolder(fs, appDir);
-
-    	fs.mkdirSync(appDir);
- 
-		cloneRepo(config, exec, function(){
-
-			writeExportObject(fs, appDir + '/config.js', config, function(){
-
-				installModules(exec, appDir, function(){
-
-					console.log(config.appName + ' install success');
-
-					// add delete install here
-
-					process.exit(0);
-				});
-			});
-		});
-	});
-}
-
-install(fs, exec, config);
+);
