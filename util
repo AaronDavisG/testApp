@@ -140,12 +140,13 @@ function setPermission(exec, path, owner, group, access, callback){
 		' && chmod -R ' + access + ' ' + path,
 		function (error, stdout, stderr) {
 
+			if(error){
+				console.log('setPermission error: ' + error);
+			}
 			callback(error);
 		}
 	);
-
 }
-
 
 module.exports.dataPrompt = dataPrompt;
 module.exports.write = write;

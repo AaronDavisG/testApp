@@ -12,7 +12,7 @@ var config = {
 	'repoName': 'AaronDavisG/myApp',
 	'repoURL': 'https://github.com',
 	'repoEXT':'git',
-	'user':'master',
+	'owner':'master',
 	'group':'master',
 	'access':755,
 	'port': process.env.PORT || 8080,
@@ -161,7 +161,7 @@ function install(fs, exec, config, callback){
 							systemService = systemService + 'ExecStart=/usr/local/bin/node ' + process.cwd() + '/server.js\n'
 							systemService = systemService + 'Restart=always\n'
 							systemService = systemService + 'RestartSec=10\n'
-							systemService = systemService + 'User='+ config.user + '\n'
+							systemService = systemService + 'User='+ config.owner + '\n'
 							systemService = systemService + 'Group='+ config.group + '\n'
 							systemService = systemService + 'StandardOutput=syslog\n'
 							systemService = systemService + 'StandardError=syslog\n'
@@ -194,6 +194,8 @@ function install(fs, exec, config, callback){
 												function(error){
 
 													if (error) {
+
+														console.log(error);
 														process.exit(1);
 													}
 													console.log(config.appName + ' install success');
