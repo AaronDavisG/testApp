@@ -106,7 +106,7 @@ function cloneRepo(exec, systemAction, dirName, repoName, repoURL, repoEXT, call
 
 	exec(systemAction +
 		' git cloneRepo ' +
-		systemAction + ' ' +
+		dirName + ' ' +
 		repoName + ' ' +
 		repoURL + ' ' +
 		repoEXT,
