@@ -7,7 +7,7 @@ var config = {
 	'appName': 'testApp',
 	'execStart': 'server.js',
 	'systemAction': '/home/master/system/script/system/action',
-	'repoName': 'AaronDavisG/myApp',
+	'repoName': 'AaronDavisG/testApp',
 	'repoURL': 'https://github.com',
 	'repoEXT':'git',
 	'owner':'master',
