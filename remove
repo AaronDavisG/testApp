@@ -26,7 +26,8 @@ function remove(exec, fs, util, config, callback){
 				process.exit(1);
 			}else{
 				console.log('setPermission success');
-				//	util.deleteFolder(fs, dir);
+				
+				util.deleteFolder(fs, dir);
 			}
 			callback(error);
 		}
