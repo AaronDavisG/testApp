@@ -183,6 +183,7 @@ function systemServiceReload(exec, callback){
 }
 
 module.exports.dataPrompt = dataPrompt;
+module.exports.deleteFolder = deleteFolder;
 module.exports.write = write;
 module.exports.writeExports = writeExports;
 module.exports.cloneRepo = cloneRepo;
