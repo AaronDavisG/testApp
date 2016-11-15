@@ -1,5 +1,57 @@
 #!/usr/bin/env node
 
-console.log("stop!!!")
+//must be run as sudo
+
+var exec = require('child_process').exec;
+var util = require('./util');
+var config = require('./config.js');
+
+function stop(exec, util, config, callback){
+
+	util.systemServiceCall(exec,
+		config.appName,
+		'disable',
+		function(error){
+	
+			if (error) {
+				console.log('stop systemServiceCall disable error');
+				process.exit(1);
+			}else{
+				console.log('stop systemServiceCall disable success');
+			}
+			util.systemServiceCall(exec,
+				config.appName,
+				'stop',
+				function(error){
+			
+					if (error) {
+						console.log('stop systemServiceCall stop error');
+						process.exit(1);
+					}else{
+						console.log('stop systemServiceCall stop success');
+					}
+					callback(error);
+				}
+			);
+		}
+	);
+}
+
+stop(exec,
+	util,
+	config,
+	function(error){
+
+		if(error){
+			console.log('stop error: ' + error);
+
+			process.exit(1);
+		}else{
+			console.log('stop success')
+			
+			process.exit(0);
+		}
+	}
+);
 
 

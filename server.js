@@ -30,7 +30,7 @@ app.use(morgan('dev'));
 
 // set static files location
 // used for requests that our frontend will make
-app.use(express.static('public'));
+app.use(express.static( __dirname + '/public'));
 
 // connect to our database (hosted on modulus.io)
 mongoose.Promise = require(config.databasePromise);

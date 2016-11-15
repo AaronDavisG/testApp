@@ -122,9 +122,12 @@ function install(fs, exec, config, callback){
 		function(error, config){
 		
 			if (error) {
+				console.log('install dataPromp error');
 				process.exit(1);
+			}else{
+				console.log('install dataPromp success');
 			}
-			var appDir = process.cwd() + '/' + config.appName;
+			var appDir = __dirname + '/' + config.appName;
 
 			deleteFolder(fs, appDir);
 
@@ -139,7 +142,10 @@ function install(fs, exec, config, callback){
 				function(error){
 
 					if (error) {
+						console.log('install cloneRepo error');
 						process.exit(1);
+					}else{
+						console.log('install cloneRepo success');
 					}
 					var util = require('./' + config.appName + '/util');
 
@@ -149,7 +155,10 @@ function install(fs, exec, config, callback){
 						function(error){
 					
 							if (error) {
+								console.log('install writeConfig error');
 								process.exit(1);
+							}else{
+								console.log('install writeConfig success');
 							}
 							var systemServicePath = '/lib/systemd/system/' + config.appName + '.service';
 
@@ -159,7 +168,7 @@ function install(fs, exec, config, callback){
 							systemService = systemService + 'Description=Node.js ' + config.appName + '\n'
 							systemService = systemService + 'Requires=After=mongod.service\n'
 							systemService = systemService + '[Service]\n'
-							systemService = systemService + 'ExecStart=/usr/local/bin/node ' + appDir + '/' + config.execStart + '\n'
+							systemService = systemService + 'ExecStart=/usr/bin/env node ' + appDir + '/' + config.execStart + '\n'
 							systemService = systemService + 'Restart=always\n'
 							systemService = systemService + 'RestartSec=10\n'
 							systemService = systemService + 'User='+ config.owner + '\n'
@@ -178,14 +187,20 @@ function install(fs, exec, config, callback){
 								function(error){
 											
 									if (error) {
+										console.log('install write systemService error');
 										process.exit(1);
+									}else{
+										console.log('install systemService success');
 									}
 									util.npmInstall(exec,
 										appDir,
 										function(error){
 
 											if (error) {
+												console.log('install npmInstall error');
 												process.exit(1);
+											}else{
+												console.log('install npmInstall success');
 											}
 											util.setPermission(exec, 
 												appDir,
@@ -195,9 +210,10 @@ function install(fs, exec, config, callback){
 												function(error){
 
 													if (error) {
-
-														console.log(error);
+														console.log('install setPermission error');
 														process.exit(1);
+													}else{
+														console.log('install setPermission success');
 													}
 													console.log(config.appName + ' install success');
 

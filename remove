@@ -1,1 +1,50 @@
-here
+#!/usr/bin/env node
+
+//must be run as sudo
+
+function remove(exec, fs, util, config, callback){
+
+	var servicePath = '/lib/systemd/system/' + config.appName + '.service';
+
+	if( fs.existsSync(servicePath) ) {
+		fs.unlinkSync(servicePath);
+	}
+	var dir= __dirname;
+	var baseDir=dir.substring(0,dir.lastIndexOf('/'));
+
+	fs.writeFileSync(baseDir + '/install', fs.readFileSync(dir + '/install'));
+
+	util.setPermission(exec,
+		baseDir + '/install',
+		config.owner,
+		config.group,
+		config.access,
+		function(error){
+			
+			if(error){
+				console.log('setPermission error: ' + error);
+				process.exit(1);
+			}else{
+				console.log('setPermission success');
+				//	util.deleteFolder(fs, dir);
+			}
+			callback(error);
+		}
+	);
+}
+
+remove(require('child_process').exec,
+	require('fs'),
+	require('./util'),
+	require('./config.js'),
+	function(error){
+
+		if(error){
+			console.log('remove error: ' + error);
+			process.exit(1);
+		}else{
+			console.log('remove success');
+			process.exit(0);
+		}
+	}
+);

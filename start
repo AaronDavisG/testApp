@@ -1,83 +1,69 @@
 #!/usr/bin/env node
-#!/usr/bin/env node
 
-var fs = require("fs");
+//must be run as sudo
+
 var exec = require('child_process').exec;
+var util = require('./util');
 var config = require('./config.js');
 
-function writeSystemService(fs, config, next){
+function start(exec, util, config, callback){
 
-	var path = '/lib/systemd/system/' + config.appName + '.service';
+	util.systemServiceReload(exec,
+		function(error){
 
-	var writeObject = '';
-
-	writeObject = writeObject + '[Unit]\n'
-	writeObject = writeObject + 'Description=Node.js ' + config.appName + '\n'
-	writeObject = writeObject + 'Requires=After=mongod.service\n'
-	writeObject = writeObject + '[Service]\n'
-	writeObject = writeObject + 'ExecStart=/usr/local/bin/node ' + process.cwd() + '/server.js\n'
-	writeObject = writeObject + 'Restart=always\n'
-	writeObject = writeObject + 'RestartSec=10\n'
-	writeObject = writeObject + 'StandardOutput=syslog\n'
-	writeObject = writeObject + 'StandardError=syslog\n'
-	writeObject = writeObject + 'SyslogIdentifier=nodejs-' + config.appName + '\n'
-	writeObject = writeObject + 'Environment=NODE_ENV=production PORT=' + config.port +'\n'
-
-	writeObject = writeObject + '[Install]\n'
-	writeObject = writeObject + 'WantedBy=multi-user.target\n'
-
-	console.log(writeObject);
-/**
-	fs.writeFile(path, writeObject, function(error) {
-		
-		if (error) {
+			if (error) {
+				console.log('start systemServiceReload error');
+				process.exit(1);
+			}else{
+				console.log('start systemServiceReload success');
+			}
+			util.systemServiceCall(exec,
+				config.appName,
+				'enable',
+				function(error){
 			
-			console.log("write error:  " + error.message);
+					if (error) {
+						console.log('start systemService enable error');
+						process.exit(1);
+					}else{
+						console.log('start systemService enable success');
+					}
+					util.systemServiceCall(exec,
+						config.appName,
+						'start',
+						function(error){
+					
+							if (error) {
+								console.log('start systemService start error');
+								process.exit(1);
+							}else{
+								console.log('start systemService start success');
+							}
+							callback(error);
+						}
+					);
+				}
+			);
+		}
+	);
+}
+
+start(exec,
+	util,
+	config,
+	function(error){
+
+		if(error){
+			console.log('start error: ' + error);
 
 			process.exit(1);
-		} else {
-			console.log("Successful Write to " + path);
-
-			next();
+		}else{
+			console.log('start success')
+			
+			process.exit(0);
 		}
-	});*/
-}
-
-function systemService
-
-function systemServiceCall(exec, serviceName, serviceCall, next){
-
-	exec('systemctl ' + serviceCall + ' ' + serviceName + '.service', function (error, stdout, stderr) {
-
-		console.log(stdout);
-
-		if (error == null) {
-			console.log(serviceName + ' ' + serviceCall +' success');
-
-			next();
-		} else {
-			console.log(serviceName + ' ' + serviceCall +' failure');
-
-			process.exit(1);
-		}
-	});
-}
-
-
-
-function start(fs, exec, config){
-
-	writeSystemService(fs, config, function(){
-
-
-
-		console.log('start ' + config.appName + ' success');
-		process.exit(1);
-	});
-}
-
-start(fs, exec, config);
-
+	}
+);
 
 
 
