@@ -4,7 +4,7 @@
             
 var config = {
 
-	'appName': 'mySuperApp',
+	'appName': 'testApp',
 	'execStart': 'server.js',
 	'systemAction': '/home/master/system/script/system/action',
 	'repoName': 'AaronDavisG/myApp',
