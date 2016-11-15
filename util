@@ -2,6 +2,8 @@
 
 function dataPrompt(data, callback){
 
+	console.log('starting util dataPrompt');
+
 	var index = 0;
 	var keys = Object.keys(data);
 	var size = keys.length;
@@ -38,7 +40,11 @@ function dataPrompt(data, callback){
 			index++;
 
 			if (index == size){
-			//	process.stdin.resume();
+				
+				console.log('util dataPromptdataPrompt success');
+
+				process.stdin.pause();
+
 				callback(null, data);
 			}else{
 				key = keys[index];
@@ -48,10 +54,14 @@ function dataPrompt(data, callback){
 				console.log('  defaultValue: ' + data[key]);
 			}
 		});
+	}else{
+		console.log('util dataPromptdataPrompt success: (no data provided)');
 	}
 }
 
 function deleteFolder(fs, path){
+
+	console.log('starting util deleteFolder');
 
 	if( fs.existsSync(path) ) {
 	
@@ -68,14 +78,41 @@ function deleteFolder(fs, path){
 		});
 		fs.rmdirSync(path);
 	}
+	console.log('util deleteFolder success');
+}
+
+function cloneRepo(exec, systemAction, dirName, repoName, repoURL, repoEXT, callback){
+
+	console.log('starting util cloneRepo');
+
+	exec(systemAction +
+		' git cloneRepo ' +
+		systemAction + ' ' +
+		repoName + ' ' +
+		repoURL + ' ' +
+		repoEXT,
+		function (error, stdout, stderr) {
+
+			if(stdout){
+				console.log(stdout);
+			}
+			if (error) {
+				console.log('util cloneRepo error: ' + error);
+			} else {
+				console.log('util cloneRepo success');
+			}
+			callback(error);
+		}
+	);
 }
 
 function write(fs, path, content, callback){
 
+	console.log('starting util write');
+
 	fs.writeFile(path, content, function(error) {
 		
 		if (error) {
-			
 			console.log('util write error:  ' + error.message); 
 		} else {
 			console.log('util write success');
@@ -86,29 +123,19 @@ function write(fs, path, content, callback){
 
 function writeExports(fs, path, exportObject, callback){
 
+	console.log('starting util writeExports');
+
 	write(fs, 
 		path,
-		'module.exports = ' + JSON.stringify(exportObject, null, 2) + ';\n',
-		callback);
-}
-
-function cloneRepo(exec, systemAction, dirName, repoName, repoURL, repoEXT, callback){
-
-	exec(config.systemAction
-		+ ' git cloneRepo '
-		+ systemAction + ' '
-		+ repoName + ' '
-		+ repoURL + ' '
-		+ config.repoEXT,
-		function (error, stdout, stderr) {
-
-			console.log(stdout);
+		'module.exports = ' + 
+		JSON.stringify(exportObject, null, 2) + 
+		';\n',
+		function(error){
 
 			if (error) {
-				
-				console.log('util cloneRepo error: ' + error);
+				console.log('util writeExports error'); 
 			} else {
-				console.log('util cloneRepo success');
+				console.log('util writeExports success');
 			}
 			callback(error);
 		}
@@ -117,29 +144,39 @@ function cloneRepo(exec, systemAction, dirName, repoName, repoURL, repoEXT, call
 
 function npmInstall(exec, path, callback){
 
+	console.log('starting util npmInstall');
+
 	exec('cd ' + path + ' && npm install',
 
 		function (error, stdout, stderr) {
 
-		console.log(stdout);
-
-		if (error) {
-			console.log('util npm install error: ' + error);
-		} else {
-			console.log('util npm install success');
-		}
+			if(stdout){
+				console.log(stdout);
+			}
+			if (error) {
+				console.log('util npm install error: ' + error);
+			} else {
+				console.log('util npm install success');
+			}
 		callback(error);
 	});
 }
 
 function setPermission(exec, path, owner, group, access, callback){
 
+	console.log('starting util npmInstall');
+
 	exec('chown -R ' + owner + ':' + group + ' ' + path +
 		' && chmod -R ' + access + ' ' + path,
 		function (error, stdout, stderr) {
 
+			if(stdout){
+				console.log(stdout);
+			}
 			if(error){
 				console.log('util setPermission error: ' + error);
+			}else{
+				console.log('util setPermission success');
 			}
 			callback(error);
 		}
@@ -148,6 +185,8 @@ function setPermission(exec, path, owner, group, access, callback){
 
 function systemServiceCall(exec, serviceName, serviceCall, callback){
 
+	console.log('starting util systemServiceCall');
+
 	exec('systemctl ' + serviceCall + ' ' + serviceName + '.service',
 		function (error, stdout, stderr) {
 
@@ -155,9 +194,9 @@ function systemServiceCall(exec, serviceName, serviceCall, callback){
 				console.log(stdout);
 			}
 			if (error) {
-				console.log('util ' + serviceName + ' ' + serviceCall +' failure: ' + error);
+				console.log('util systemServiceCall error: ' + error);
 			} else {
-				console.log('util ' + serviceName + ' ' + serviceCall +' success');
+				console.log('util systemServiceCall success');
 			}
 			callback(error);
 		}
@@ -166,6 +205,8 @@ function systemServiceCall(exec, serviceName, serviceCall, callback){
 
 function systemServiceReload(exec, callback){
 
+	console.log('starting util systemServiceReload');
+
 	exec('systemctl daemon-reload',
 		function (error, stdout, stderr) {
 
@@ -173,7 +214,7 @@ function systemServiceReload(exec, callback){
 				console.log(stdout);
 			}
 			if (error) {
-				console.log('util systemServiceReload failure: ' + error);
+				console.log('util systemServiceReload error: ' + error);
 			} else {
 				console.log('util systemServiceReload success');
 			}
@@ -182,15 +223,58 @@ function systemServiceReload(exec, callback){
 	);
 }
 
+function lint(exec, callback){
+
+	console.log('starting util lint');
+
+	console.log('starting lint jshint');
+
+	exec('jshint . ./install ./init ./start ./stop ./reset ./status ./remove ./util --exclude ./node_modules',
+		function (error, stdout, stderr) {
+
+			if(stdout){
+				console.log(stdout);
+			}
+			if (error) {
+				console.log('lint jshint error: ' + error);
+			
+				callback(error);
+			} else {
+				console.log('lint jshint success');
+
+				console.log('starting lint csslint');
+
+				exec('csslint .',
+				 	function (error, stdout, stderr) {
+
+						if(stdout){
+							console.log(stdout);
+						}
+						if (error) {
+							console.log('lint csslint failure: ' + error);
+						} else {
+							console.log('lint csslint success');
+
+							console.log('util lint success');
+						}
+						callback(error);
+					}
+				);
+			}
+		}
+	);
+}
+
 module.exports.dataPrompt = dataPrompt;
 module.exports.deleteFolder = deleteFolder;
+module.exports.cloneRepo = cloneRepo;
 module.exports.write = write;
 module.exports.writeExports = writeExports;
-module.exports.cloneRepo = cloneRepo;
 module.exports.npmInstall = npmInstall;
 module.exports.setPermission = setPermission;
 module.exports.systemServiceCall = systemServiceCall;
 module.exports.systemServiceReload = systemServiceReload;
+module.exports.lint = lint;
 
 
 

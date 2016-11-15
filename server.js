@@ -10,8 +10,6 @@ var mongoose = require('mongoose'); // for working w/ our database
 var path = require('path');
 var config = require('./config');
 
-
-
 // APP CONFIGURATION ---------------------
 // use body parser so we can grab information from POST requests
 app.use(bodyParser.urlencoded({ extended: true }));

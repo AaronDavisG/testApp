@@ -1,10 +1,7 @@
 #!/usr/bin/env node
 
 //must run as sudo
-
-var fs = require('fs');
-var exec = require('child_process').exec;
-                                               
+            
 var config = {
 
 	'appName': 'mySuperApp',
@@ -20,9 +17,11 @@ var config = {
 	'database': 'mongodb://localhost:27017/myDatabase',
 	'databasePromise': 'bluebird',
 	'secret': 'mySecret'
-}
+};
 
 function dataPrompt(data, callback){
+
+	console.log('starting util dataPrompt');
 
 	var index = 0;
 	var keys = Object.keys(data);
@@ -60,7 +59,11 @@ function dataPrompt(data, callback){
 			index++;
 
 			if (index == size){
-			//	process.stdin.resume();
+				
+				console.log('util dataPromptdataPrompt success');
+
+				process.stdin.pause();
+
 				callback(null, data);
 			}else{
 				key = keys[index];
@@ -70,10 +73,14 @@ function dataPrompt(data, callback){
 				console.log('  defaultValue: ' + data[key]);
 			}
 		});
+	}else{
+		console.log('util dataPromptdataPrompt success: (no data provided)');
 	}
 }
 
 function deleteFolder(fs, path){
+
+	console.log('starting util deleteFolder');
 
 	if( fs.existsSync(path) ) {
 	
@@ -90,26 +97,29 @@ function deleteFolder(fs, path){
 		});
 		fs.rmdirSync(path);
 	}
+	console.log('util deleteFolder success');
 }
 
 function cloneRepo(exec, systemAction, dirName, repoName, repoURL, repoEXT, callback){
 
-	exec(config.systemAction
-		+ ' git cloneRepo '
-		+ dirName + ' '
-		+ repoName + ' '
-		+ repoURL + ' '
-		+ config.repoEXT,
+	console.log('starting util cloneRepo');
+
+	exec(systemAction +
+		' git cloneRepo ' +
+		systemAction + ' ' +
+		repoName + ' ' +
+		repoURL + ' ' +
+		repoEXT,
 		function (error, stdout, stderr) {
 
-			console.log(stdout);
-
+			if(stdout){
+				console.log(stdout);
+			}
 			if (error) {
 				
-				console.log('exec error: ' + error);
+				console.log('util cloneRepo error: ' + error);
 			} else {
-				console.log('repo: ' + repoURL + '/' + repoName + '.' + repoEXT 
-					+ ' cloned to: ' + dirName);
+				console.log('util cloneRepo success');
 			}
 			callback(error);
 		}
@@ -118,20 +128,26 @@ function cloneRepo(exec, systemAction, dirName, repoName, repoURL, repoEXT, call
 
 function install(fs, exec, config, callback){
 
+	console.log('starting install: process ' + process.pid);
+
+	console.log('starting install config promt');
+
 	dataPrompt(config,
 		function(error, config){
 		
 			if (error) {
-				console.log('install dataPromp error');
+				console.log('install config promt error: process ' + process.pid + ' exit');
 				process.exit(1);
 			}else{
-				console.log('install dataPromp success');
+				console.log('install config promt success');
 			}
 			var appDir = __dirname + '/' + config.appName;
 
 			deleteFolder(fs, appDir);
 
 	    	fs.mkdirSync(appDir);
+			
+			console.log('starting install cloneRepo');
 
 	 		cloneRepo(exec, 
 	 			config.systemAction,
@@ -142,12 +158,14 @@ function install(fs, exec, config, callback){
 				function(error){
 
 					if (error) {
-						console.log('install cloneRepo error');
+						console.log('install cloneRepo error: process ' + process.pid + ' exit');
 						process.exit(1);
 					}else{
 						console.log('install cloneRepo success');
 					}
 					var util = require('./' + config.appName + '/util');
+
+					console.log('starting install write config');
 
 					util.writeExports(fs,
 						appDir + '/config.js',
@@ -155,31 +173,32 @@ function install(fs, exec, config, callback){
 						function(error){
 					
 							if (error) {
-								console.log('install writeConfig error');
+								console.log('install write config error: process ' + process.pid + ' exit');
 								process.exit(1);
 							}else{
-								console.log('install writeConfig success');
+								console.log('install write config success');
 							}
 							var systemServicePath = '/lib/systemd/system/' + config.appName + '.service';
 
-							var systemService = '';
+							var systemService = '' +
+								'[Unit]\n' +
+								'Description=Node.js ' + config.appName + '\n' +
+								'Requires=After=mongod.service\n' +
+								'[Service]\n' +
+								'ExecStart=/usr/bin/env node ' + appDir + '/' + config.execStart + '\n' +
+								'Restart=always\n' +
+								'RestartSec=10\n' +
+								'User='+ config.owner + '\n' +
+								'Group='+ config.group + '\n' +
+								'StandardOutput=syslog\n' +
+								'StandardError=syslog\n' +
+								'SyslogIdentifier=nodejs-' + config.appName + '\n' +
+								'Environment=NODE_ENV=production PORT=' + config.port +'\n' +
 
-							systemService = systemService + '[Unit]\n'
-							systemService = systemService + 'Description=Node.js ' + config.appName + '\n'
-							systemService = systemService + 'Requires=After=mongod.service\n'
-							systemService = systemService + '[Service]\n'
-							systemService = systemService + 'ExecStart=/usr/bin/env node ' + appDir + '/' + config.execStart + '\n'
-							systemService = systemService + 'Restart=always\n'
-							systemService = systemService + 'RestartSec=10\n'
-							systemService = systemService + 'User='+ config.owner + '\n'
-							systemService = systemService + 'Group='+ config.group + '\n'
-							systemService = systemService + 'StandardOutput=syslog\n'
-							systemService = systemService + 'StandardError=syslog\n'
-							systemService = systemService + 'SyslogIdentifier=nodejs-' + config.appName + '\n'
-							systemService = systemService + 'Environment=NODE_ENV=production PORT=' + config.port +'\n'
-
-							systemService = systemService + '[Install]\n'
-							systemService = systemService + 'WantedBy=multi-user.target\n'
+								'[Install]\n' +
+								'WantedBy=multi-user.target\n';
+							
+							console.log('starting install write system service');
 
 							util.write(fs,
 								systemServicePath,
@@ -187,21 +206,25 @@ function install(fs, exec, config, callback){
 								function(error){
 											
 									if (error) {
-										console.log('install write systemService error');
+										console.log('install write system service error: process ' + process.pid + ' exit');
 										process.exit(1);
 									}else{
-										console.log('install systemService success');
+										console.log('install system service success');
 									}
+									console.log('starting install npmInstall');
+
 									util.npmInstall(exec,
 										appDir,
 										function(error){
 
 											if (error) {
-												console.log('install npmInstall error');
+												console.log('install npmInstall error: process ' + process.pid + ' exit');
 												process.exit(1);
 											}else{
 												console.log('install npmInstall success');
 											}
+											console.log('starting install setPermission');
+
 											util.setPermission(exec, 
 												appDir,
 												config.owner,
@@ -210,12 +233,12 @@ function install(fs, exec, config, callback){
 												function(error){
 
 													if (error) {
-														console.log('install setPermission error');
+														console.log('install setPermission error: process ' + process.pid + ' exit');
 														process.exit(1);
 													}else{
 														console.log('install setPermission success');
 													}
-													console.log(config.appName + ' install success');
+													console.log('install success');
 
 													fs.unlinkSync(__filename);
 
@@ -233,12 +256,18 @@ function install(fs, exec, config, callback){
 		}
 	);
 }
-
-install(fs,
-	exec,
+                                   
+install(require('fs'),
+	require('child_process').exec,
 	config,
 	function(error){
-		console.log('done');
-		process.exit(0);
+
+		if(error){
+			console.log('error: process ' + process.pid + ' exit');
+			process.exit(1);
+		}else{
+			console.log('success: process ' + process.pid + ' exit');
+			process.exit(0);
+		}
 	}
 );

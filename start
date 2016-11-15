@@ -2,42 +2,48 @@
 
 //must be run as sudo
 
-var exec = require('child_process').exec;
-var util = require('./util');
-var config = require('./config.js');
-
 function start(exec, util, config, callback){
+
+	console.log('starting start: process ' + process.pid);
+
+	console.log('starting start systemServiceReload');
 
 	util.systemServiceReload(exec,
 		function(error){
 
 			if (error) {
-				console.log('start systemServiceReload error');
+				console.log('start systemServiceReload error: process ' + process.pid + ' exit');
 				process.exit(1);
 			}else{
 				console.log('start systemServiceReload success');
 			}
+			console.log('starting start systemServiceCall enable');
+
 			util.systemServiceCall(exec,
 				config.appName,
 				'enable',
 				function(error){
 			
 					if (error) {
-						console.log('start systemService enable error');
+						console.log('start systemService enable error: process ' + process.pid + ' exit');
 						process.exit(1);
 					}else{
 						console.log('start systemService enable success');
 					}
+					console.log('starting start systemServiceCall start');
+
 					util.systemServiceCall(exec,
 						config.appName,
 						'start',
 						function(error){
 					
 							if (error) {
-								console.log('start systemService start error');
+								console.log('start systemService start error: process ' + process.pid + ' exit');
 								process.exit(1);
 							}else{
 								console.log('start systemService start success');
+
+								console.log('starting success');
 							}
 							callback(error);
 						}
@@ -48,55 +54,17 @@ function start(exec, util, config, callback){
 	);
 }
 
-start(exec,
-	util,
-	config,
+start(require('child_process').exec,
+	require('./util'),
+	require('./config.js'),
 	function(error){
 
 		if(error){
-			console.log('start error: ' + error);
-
+			console.log('error: process ' + process.pid + ' exit');
 			process.exit(1);
 		}else{
-			console.log('start success')
-			
+			console.log('success: process ' + process.pid + ' exit');
 			process.exit(0);
 		}
 	}
 );
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
-#create systemd service file
-echo "[Unit]
-Description=High-performance, schema-free document-oriented database
-After=network.target
- 
-[Service]
-Type=forking
-User=$user
-Group=$group
-PIDFile=$pidPath
-ExecStart=/usr/bin/mongod --quiet --config /etc/mongod.conf
-
-[Install]
-WantedBy=multi-user.target" > /lib/systemd/system/mongod.service
-
-
-
-systemctl daemon-reload
-
-systemctl enable mongod.service
-
-*/

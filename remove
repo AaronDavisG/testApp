@@ -4,6 +4,8 @@
 
 function remove(exec, fs, util, config, callback){
 
+	console.log('starting remove: process ' + process.pid);
+
 	var servicePath = '/lib/systemd/system/' + config.appName + '.service';
 
 	if( fs.existsSync(servicePath) ) {
@@ -14,6 +16,8 @@ function remove(exec, fs, util, config, callback){
 
 	fs.writeFileSync(baseDir + '/install', fs.readFileSync(dir + '/install'));
 
+	console.log('starting remove setPermission');
+
 	util.setPermission(exec,
 		baseDir + '/install',
 		config.owner,
@@ -22,12 +26,14 @@ function remove(exec, fs, util, config, callback){
 		function(error){
 			
 			if(error){
-				console.log('setPermission error: ' + error);
+				console.log('remove setPermission error: process ' + process.pid + ' exit');
 				process.exit(1);
 			}else{
-				console.log('setPermission success');
+				console.log('remove setPermission success');
 				
 				util.deleteFolder(fs, dir);
+
+				console.log('remove success');
 			}
 			callback(error);
 		}
@@ -41,10 +47,10 @@ remove(require('child_process').exec,
 	function(error){
 
 		if(error){
-			console.log('remove error: ' + error);
+			console.log('error: process ' + process.pid + ' exit');
 			process.exit(1);
 		}else{
-			console.log('remove success');
+			console.log('success: process ' + process.pid + ' exit');
 			process.exit(0);
 		}
 	}

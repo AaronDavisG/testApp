@@ -1,3 +1,37 @@
-lint:
-	jshint . --exclude ./node_modules
-	csslint .
+#!/usr/bin/env node
+
+function init(exec, util, callback){
+
+	console.log('starting init: process ' + process.pid);
+
+	console.log('starting init lint');
+
+	util.lint(exec,
+		function(error){
+			
+			if (error) {
+				console.log('init lint error: process ' + process.pid + ' exit');
+				process.exit(1);
+			}else{
+				console.log('init lint success');
+
+				console.log('init success');
+			}
+			callback(error);
+		}
+	);
+}
+
+init(require('child_process').exec,
+	require('./util'),
+	function(error){
+		
+		if(error){
+			console.log('error: process ' + process.pid + ' exit');
+			process.exit(1);
+		}else{
+			console.log('success: process ' + process.pid + ' exit');
+			process.exit(0);
+		}
+	}
+);

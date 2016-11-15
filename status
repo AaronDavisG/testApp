@@ -1,1 +1,42 @@
-here
+#!/usr/bin/env node
+
+//must be run as sudo
+
+function status(exec, util, config, callback){
+
+	console.log('starting status: process ' + process.pid);
+
+	console.log('starting status systemServiceCall');
+
+	util.systemServiceCall(exec,
+		config.appName,
+		'status',
+		function(error){
+
+			if (error) {
+				console.log('status systemServiceCall error: process ' + process.pid + ' exit');
+				process.exit(1);
+			}else{
+				console.log('status systemServiceCall success');
+
+				console.log('status success');
+			}
+			callback(error);
+		}
+	);
+}
+
+status(require('child_process').exec,
+	require('./util'),
+	require('./config.js'),
+	function(error){
+		
+		if(error){
+			console.log('error: process ' + process.pid + ' exit');
+			process.exit(1);
+		}else{
+			console.log('success: process ' + process.pid + ' exit');
+			process.exit(0);
+		}
+	}
+);

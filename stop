@@ -2,11 +2,11 @@
 
 //must be run as sudo
 
-var exec = require('child_process').exec;
-var util = require('./util');
-var config = require('./config.js');
-
 function stop(exec, util, config, callback){
+	
+	console.log('starting stop: process ' + process.pid);
+
+	console.log('starting stop systemServiceCall disable');
 
 	util.systemServiceCall(exec,
 		config.appName,
@@ -14,21 +14,25 @@ function stop(exec, util, config, callback){
 		function(error){
 	
 			if (error) {
-				console.log('stop systemServiceCall disable error');
+				console.log('stop systemServiceCall disable error: process ' + process.pid + ' exit');
 				process.exit(1);
 			}else{
 				console.log('stop systemServiceCall disable success');
 			}
+			console.log('starting stop systemServiceCall stop');
+
 			util.systemServiceCall(exec,
 				config.appName,
 				'stop',
 				function(error){
 			
 					if (error) {
-						console.log('stop systemServiceCall stop error');
+						console.log('stop systemServiceCall stop error: process ' + process.pid + ' exit');
 						process.exit(1);
 					}else{
 						console.log('stop systemServiceCall stop success');
+
+						console.log('stop success');
 					}
 					callback(error);
 				}
@@ -37,18 +41,16 @@ function stop(exec, util, config, callback){
 	);
 }
 
-stop(exec,
-	util,
-	config,
+stop(require('child_process').exec,
+	require('./util'),
+	require('./config.js'),
 	function(error){
 
 		if(error){
-			console.log('stop error: ' + error);
-
+			console.log('error: process ' + process.pid + ' exit');
 			process.exit(1);
 		}else{
-			console.log('stop success')
-			
+			console.log('success: process ' + process.pid + ' exit');
 			process.exit(0);
 		}
 	}
